@@ -75,17 +75,16 @@ str(conv_metrics.wide)
 ## dense
 
 model <- keras_model_sequential() %>%
-  layer_dense(units = 256 , input_shape = ncol(x_train), 
-              activation = "sigmoid",use_bias = FALSE) %>%                   # input layer
+  layer_flatten( input_shape = c(16,16)) %>%                                 # input layer
   layer_dense(units = 270 , activation = "sigmoid" , use_bias = FALSE ) %>%  # hidden layer
   layer_dense(units = 270 , activation = "sigmoid" , use_bias = FALSE ) %>%  # hidden layer
   layer_dense(units = 128 , activation = "sigmoid" , use_bias = FALSE ) %>%  # hidden layer
-  layer_dense(units= 10 , activation = "sigmoid", use_bias = FALSE )         # ouput layer
+  layer_dense(units= 10 , activation = "softmax", use_bias = FALSE )         # ouput layer
 
 model %>% 
   compile(
-    loss = "loss_categorical_crossentropy",
-    optimizer = "softmax",
+    loss = loss_categorical_crossentropy,
+    optimizer = "SGD",
     metrics = "accuracy"
   )
 
@@ -96,3 +95,7 @@ dense_result <- model %>%
     validation_split = 0.2,
     verbose = 2
   )
+
+conv_metrics.wide <- do.call(data.table::data.table, conv_result$metrics)
+conv_metrics.wide[, epoch := 1:.N]  
+str(conv_metrics.wide)
