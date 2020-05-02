@@ -44,11 +44,9 @@ model <- keras_model_sequential() %>%
   layer_conv_2d(filters = 32, kernel_size = c(3,3), activation = 'relu',
                 input_shape = dim(zip.X.array)[-1]) %>% 
   layer_conv_2d(filters = 64, kernel_size = c(3,3), activation = 'relu') %>% 
-  layer_max_pooling_2d(pool_size = c(2, 2)) %>% 
-  layer_dropout(rate = 0.25) %>% 
+  layer_max_pooling_2d(pool_size = c(2, 2)) %>%
   layer_flatten() %>% 
-  layer_dense(units = 128, activation = 'relu') %>% 
-  layer_dropout(rate = 0.5) %>% 
+  layer_dense(units = 128, activation = 'relu') %>%
   layer_dense(units = num_classes, activation = 'softmax')
 
 model %>% compile(
@@ -57,7 +55,7 @@ model %>% compile(
   metrics = c('accuracy')
   )
   
-result <- model %>% fit(
+conv_result <- model %>% fit(
   test, y_test,
   batch_size = batch_size,
   epochs = epochs,
@@ -70,6 +68,31 @@ scores <- model %>% evaluate(
   test, y_test, verbose = 0
 )
 
-metrics.wide <- do.call(data.table::data.table, result$metrics)
-metrics.wide[, epoch := 1:.N]  
-str(metrics.wide)
+conv_metrics.wide <- do.call(data.table::data.table, conv_result$metrics)
+conv_metrics.wide[, epoch := 1:.N]  
+str(conv_metrics.wide)
+
+## dense
+
+model <- keras_model_sequential() %>%
+  layer_dense(units = 256 , input_shape = ncol(x_train), 
+              activation = "sigmoid",use_bias = FALSE) %>%                   # input layer
+  layer_dense(units = 270 , activation = "sigmoid" , use_bias = FALSE ) %>%  # hidden layer
+  layer_dense(units = 270 , activation = "sigmoid" , use_bias = FALSE ) %>%  # hidden layer
+  layer_dense(units = 128 , activation = "sigmoid" , use_bias = FALSE ) %>%  # hidden layer
+  layer_dense(units= 10 , activation = "sigmoid", use_bias = FALSE )         # ouput layer
+
+model %>% 
+  compile(
+    loss = "loss_categorical_crossentropy",
+    optimizer = "softmax",
+    metrics = "accuracy"
+  )
+
+dense_result <- model %>% 
+  fit(
+    x = x_train, y = y_train,
+    epochs = epochs,
+    validation_split = 0.2,
+    verbose = 2
+  )
